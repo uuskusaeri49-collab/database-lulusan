@@ -1812,11 +1812,6 @@
             refreshTableAndCharts();
         }
 
-        function refreshTableAndCharts() {
-            if (dTableInstance) dTableInstance.draw();
-            initCharts();
-        }
-
         function switchPanel(panelIndex) {
             document.getElementById('appSidebar').classList.remove('show');
 
@@ -2052,14 +2047,6 @@
             renderReplacementPreview();
         }
 
-        function formatTanggalIndo(dateStr) {
-            if (!dateStr) return '-';
-            const parts = dateStr.split('-');
-            if (parts.length !== 3) return dateStr;
-            const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-            return `${parseInt(parts[2], 10)} ${months[parseInt(parts[1], 10) - 1]} ${parts[0]}`;
-        }
-
         function renderReplacementPreview() {
             const studentSelect = document.getElementById('repSelectStudent');
             if (!studentSelect) return;
@@ -2157,121 +2144,175 @@
                     </div>
                     <div style="width: 220px; font-size: 0.95rem; text-align: left;">
                         <p style="margin: 0 0 50px 0;">${titimangsa}<br>Kepala Sekolah,</p>
-                        <p style="margin: 0; font-weight: bold; text-decoration: underline;">${principalName}</p>
-                        <p style="margin: 0;">NIP. ${principalNip}</p>
+                        <strong style="text-decoration: underline; text-transform: capitalize;">${principalName}</strong><br>NIP. ${principalNip}
                     </div>
                 </div>
-                <div style="margin-top: 20px; font-family: 'Times New Roman', Times, serif; font-size: 0.85rem;">
-                    <p style="margin: 0 0 40px 0;">Mengetahui,<br>${dinasJabatan} ${dinasEdu}</p>
-                    <p style="margin: 0; font-weight: bold; text-decoration: underline;">${dinasName}</p>
-                    <p style="margin: 0;">NIP. ${dinasNip}</p>
+
+                <div style="margin-top: 35px; text-align: center; font-size: 0.95rem; font-family: 'Times New Roman', Times, serif;">
+                    <p style="margin: 0 0 60px 0;">Mengetahui,<br>Kepala Dinas Pendidikan</p>
+                    <strong style="text-decoration: underline; text-transform: capitalize;">${dinasName}</strong><br>
+                    ${dinasJabatan ? `<em>${dinasJabatan}</em><br>` : ''}
+                    NIP. ${dinasNip}
                 </div>
             `;
         }
 
-        /* MODAL CRUD ACTIONS */
+        document.addEventListener('DOMContentLoaded', () => {
+            ['repDinasName', 'repDinasJabatan', 'repDinasNip', 'repLetterNumber', 'repTitimangsa'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('input', renderReplacementPreview);
+            });
+        });
+
+        let activeEditId = null;
+
         function openTambahModal() {
-            document.getElementById('formModalTitle').innerHTML = `<i class="bi bi-person-plus-fill me-2"></i>Tambah Data Siswa`;
-            document.getElementById('studentForm').reset();
+            activeEditId = null;
             document.getElementById('studentId').value = '';
+            document.getElementById('formModalTitle').innerHTML = '<i class="bi bi-person-plus-fill me-2"></i>Tambah Data Siswa';
+            document.getElementById('studentForm').reset();
             document.getElementById('fotoPreview').src = "https://placehold.co/120x160/0d6efd/ffffff?text=FOTO+3x4";
+            
             currentTempUploads = { kartu: null, skl: null, legalisir: null };
-            updateDocStatusLabels();
+            document.getElementById('statusDocKartu').innerText = "Belum ada file kustom.";
+            document.getElementById('statusDocSkl').innerText = "Belum ada file kustom.";
+            document.getElementById('statusDocLegalisir').innerText = "Belum ada file kustom.";
             
             const modal = new bootstrap.Modal(document.getElementById('siswaFormModal'));
             modal.show();
         }
 
         function openEditModal(id) {
-            const student = dbSiswa.find(s => s.id === id);
-            if (!student) return;
+            const s = dbSiswa.find(item => item.id === id);
+            if (!s) return;
 
-            document.getElementById('formModalTitle').innerHTML = `<i class="bi bi-pencil-square me-2"></i>Edit Data Siswa`;
-            document.getElementById('studentId').value = student.id;
-            document.getElementById('txNis').value = student.nis;
-            document.getElementById('txNisn').value = student.nisn;
-            document.getElementById('txNama').value = student.nama;
-            document.getElementById('txGender').value = student.gender;
-            document.getElementById('txTempatLahir').value = student.tempatLahir;
-            document.getElementById('txTanggalLahir').value = student.tanggalLahir;
-            document.getElementById('txAyah').value = student.ayah;
-            document.getElementById('txIbu').value = student.ibu;
-            document.getElementById('txNoHp').value = student.noHp;
-            document.getElementById('txTahunPelajaran').value = student.tahunPelajaran;
-            document.getElementById('txTahunLulus').value = student.tahunLulus;
-            document.getElementById('txIjazah').value = student.ijazah;
-            document.getElementById('txSkl').value = student.skl;
-            document.getElementById('txNoPeserta').value = student.noPeserta;
-            document.getElementById('txAlamat').value = student.alamat;
+            activeEditId = id;
+            document.getElementById('studentId').value = s.id;
+            document.getElementById('formModalTitle').innerHTML = '<i class="bi bi-pencil-square me-2"></i>Edit Data Siswa';
+            
+            document.getElementById('txNis').value = s.nis || '';
+            document.getElementById('txNisn').value = s.nisn || '';
+            document.getElementById('txNama').value = s.nama || '';
+            document.getElementById('txGender').value = s.gender || 'Laki-laki';
+            document.getElementById('txTempatLahir').value = s.tempatLahir || '';
+            document.getElementById('txTanggalLahir').value = s.tanggalLahir || '';
+            document.getElementById('txAyah').value = s.ayah || '';
+            document.getElementById('txIbu').value = s.ibu || '';
+            document.getElementById('txNoHp').value = s.noHp || '';
+            document.getElementById('txTahunPelajaran').value = s.tahunPelajaran || '';
+            document.getElementById('txTahunLulus').value = s.tahunLulus || '';
+            document.getElementById('txIjazah').value = s.ijazah || '';
+            document.getElementById('txSkl').value = s.skl || '';
+            document.getElementById('txNoPeserta').value = s.noPeserta || '';
+            document.getElementById('txAlamat').value = s.alamat || '';
+            
+            if (s.foto) {
+                document.getElementById('fotoPreview').src = s.foto;
+            } else {
+                document.getElementById('fotoPreview').src = "https://placehold.co/120x160/0d6efd/ffffff?text=FOTO+3x4";
+            }
 
-            document.getElementById('fotoPreview').src = student.foto || "https://placehold.co/120x160/0d6efd/ffffff?text=FOTO+3x4";
-            currentTempUploads = student.dokumen ? { ...student.dokumen } : { kartu: null, skl: null, legalisir: null };
-            updateDocStatusLabels();
+            currentTempUploads = { ...(s.dokumen || { kartu: null, skl: null, legalisir: null }) };
+            document.getElementById('statusDocKartu').innerText = currentTempUploads.kartu ? `Tersimpan: ${currentTempUploads.kartu.name}` : "Belum ada file kustom.";
+            document.getElementById('statusDocSkl').innerText = currentTempUploads.skl ? `Tersimpan: ${currentTempUploads.skl.name}` : "Belum ada file kustom.";
+            document.getElementById('statusDocLegalisir').innerText = currentTempUploads.legalisir ? `Tersimpan: ${currentTempUploads.legalisir.name}` : "Belum ada file kustom.";
 
             const modal = new bootstrap.Modal(document.getElementById('siswaFormModal'));
             modal.show();
         }
 
+        function deleteSiswa(id) {
+            const s = dbSiswa.find(item => item.id === id);
+            if (!s) return;
+
+            showConfirmDialog('Hapus Data Siswa', `Apakah Anda yakin ingin menghapus data siswa ${s.nama}?`, function() {
+                dbSiswa = dbSiswa.filter(item => item.id !== id);
+                saveToLocalStorage();
+                refreshTableAndCharts();
+                showNotification('Data siswa berhasil dihapus!', 'success');
+            });
+        }
+
         function handleStudentFormSubmit(event) {
             event.preventDefault();
+            
+            const id = document.getElementById('studentId').value;
+            const nis = document.getElementById('txNis').value.trim();
+            const nisn = document.getElementById('txNisn').value.trim();
+            const nama = document.getElementById('txNama').value.trim();
+            const gender = document.getElementById('txGender').value;
+            const tempatLahir = document.getElementById('txTempatLahir').value.trim();
+            const tanggalLahir = document.getElementById('txTanggalLahir').value;
+            const ayah = document.getElementById('txAyah').value.trim();
+            const ibu = document.getElementById('txIbu').value.trim();
+            const noHp = document.getElementById('txNoHp').value.trim();
+            const tahunPelajaran = document.getElementById('txTahunPelajaran').value.trim();
+            const tahunLulus = parseInt(document.getElementById('txTahunLulus').value.trim());
+            const ijazah = document.getElementById('txIjazah').value.trim();
+            const skl = document.getElementById('txSkl').value.trim();
+            const noPeserta = document.getElementById('txNoPeserta').value.trim();
+            const alamat = document.getElementById('txAlamat').value.trim();
+            const foto = document.getElementById('fotoPreview').src.startsWith('data:image') ? document.getElementById('fotoPreview').src : '';
 
-            const id = document.getElementById('studentId').value || 'st-' + Date.now();
-            const fotoSrc = document.getElementById('fotoPreview').src;
+            const duplicateNis = dbSiswa.find(s => s.id !== id && s.nis === nis);
+            const duplicateNisn = dbSiswa.find(s => s.id !== id && s.nisn === nisn);
+            const duplicateName = dbSiswa.find(s => s.id !== id && s.nama.toLowerCase() === nama.toLowerCase());
 
-            const studentObj = {
-                id: id,
-                nis: document.getElementById('txNis').value.trim(),
-                nisn: document.getElementById('txNisn').value.trim(),
-                nama: document.getElementById('txNama').value.trim(),
-                gender: document.getElementById('txGender').value,
-                tempatLahir: document.getElementById('txTempatLahir').value.trim(),
-                tanggalLahir: document.getElementById('txTanggalLahir').value,
-                ayah: document.getElementById('txAyah').value.trim(),
-                ibu: document.getElementById('txIbu').value.trim(),
-                noHp: document.getElementById('txNoHp').value.trim(),
-                tahunPelajaran: document.getElementById('txTahunPelajaran').value.trim(),
-                tahunLulus: parseInt(document.getElementById('txTahunLulus').value, 10),
-                ijazah: document.getElementById('txIjazah').value.trim(),
-                skl: document.getElementById('txSkl').value.trim(),
-                noPeserta: document.getElementById('txNoPeserta').value.trim(),
-                alamat: document.getElementById('txAlamat').value.trim(),
-                foto: fotoSrc.startsWith('data:image') ? fotoSrc : '',
+            if (duplicateNis) {
+                showNotification(`Gagal menyimpan! Data dengan nomor NIS "${nis}" sudah berada di sistem.`, 'error');
+                return;
+            }
+            if (duplicateNisn) {
+                showNotification(`Gagal menyimpan! Data dengan nomor NISN "${nisn}" sudah berada di sistem.`, 'error');
+                return;
+            }
+            if (duplicateName) {
+                showNotification(`Peringatan: Data dengan nama mirip/sama ("${nama}") sudah berada di sistem.`, 'warn');
+            }
+
+            const studentData = {
+                id: id || 'st-' + Date.now(),
+                nis,
+                nisn,
+                nama,
+                gender,
+                tempatLahir,
+                tanggalLahir,
+                ayah,
+                ibu,
+                noHp,
+                tahunPelajaran,
+                tahunLulus,
+                ijazah,
+                skl,
+                noPeserta,
+                alamat,
+                foto,
                 dokumen: { ...currentTempUploads }
             };
 
-            const existingIdx = dbSiswa.findIndex(s => s.id === id);
-            if (existingIdx > -1) {
-                dbSiswa[existingIdx] = studentObj;
-                showNotification('Data siswa berhasil diperbarui!', 'success');
+            if (id) {
+                const index = dbSiswa.findIndex(item => item.id === id);
+                if (index !== -1) {
+                    dbSiswa[index] = studentData;
+                }
             } else {
-                dbSiswa.push(studentObj);
-                showNotification('Siswa baru berhasil ditambahkan!', 'success');
+                dbSiswa.push(studentData);
             }
 
             saveToLocalStorage();
+            refreshTableAndCharts();
+            bootstrap.Modal.getInstance(document.getElementById('siswaFormModal')).hide();
+            showNotification('Data siswa berhasil disimpan!', 'success');
+        }
+
+        function refreshTableAndCharts() {
             initDataTables();
             recalculateOverview();
+            initCharts();
             populateYearFilter();
             populateRepTahunPelajaranDropdown();
             populateReplacementStudentDropdown();
-
-            bootstrap.Modal.getInstance(document.getElementById('siswaFormModal')).hide();
-        }
-
-        function deleteSiswa(id) {
-            const student = dbSiswa.find(s => s.id === id);
-            if (!student) return;
-
-            showConfirmDialog('Hapus Alumni', `Apakah Anda yakin ingin menghapus data alumni ${student.nama}?`, function() {
-                dbSiswa = dbSiswa.filter(s => s.id !== id);
-                saveToLocalStorage();
-                initDataTables();
-                recalculateOverview();
-                populateYearFilter();
-                populateRepTahunPelajaranDropdown();
-                populateReplacementStudentDropdown();
-                showNotification('Data siswa telah berhasil dihapus.', 'warn');
-            });
         }
 
         function previewAndCropImage(input) {
@@ -2308,73 +2349,193 @@
         function handleDigitalDocUpload(input, type) {
             if (input.files && input.files[0]) {
                 const file = input.files[0];
-                if (file.size > 512000) {
-                    showNotification('Ukuran file maksimal 500KB!', 'error');
+                if (file.size > 512000) { // Max 500KB
+                    showNotification('Ukuran file dokumen melebihi batas 500KB!', 'error');
                     input.value = '';
                     return;
                 }
+
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    currentTempUploads[type] = e.target.result;
-                    updateDocStatusLabels();
-                    showNotification(`Berkas ${type.toUpperCase()} tersimpan.`, 'info');
+                    currentTempUploads[type] = {
+                        name: file.name,
+                        data: e.target.result,
+                        type: file.type
+                    };
+                    document.getElementById(`statusDoc${type.charAt(0).toUpperCase() + type.slice(1)}`).innerText = `Tersimpan: ${file.name}`;
+                    showNotification(`Dokumen digital ${type.toUpperCase()} siap disimpan!`, 'success');
                 };
                 reader.readAsDataURL(file);
             }
         }
 
-        function updateDocStatusLabels() {
-            document.getElementById('statusDocKartu').innerText = currentTempUploads.kartu ? '✓ Berkas Kustom Ada' : 'Belum ada file kustom.';
-            document.getElementById('statusDocSkl').innerText = currentTempUploads.skl ? '✓ Berkas Kustom Ada' : 'Belum ada file kustom.';
-            document.getElementById('statusDocLegalisir').innerText = currentTempUploads.legalisir ? '✓ Berkas Kustom Ada' : 'Belum ada file kustom.';
-        }
-
         function viewSiswaDetail(id) {
-            const student = dbSiswa.find(s => s.id === id);
-            if (!student) return;
-            activeDetailStudent = student;
+            const s = dbSiswa.find(item => item.id === id);
+            if (!s) return;
 
-            document.getElementById('detailNama').innerText = student.nama;
-            document.getElementById('detailNisNisn').innerText = `${student.nis} / ${student.nisn}`;
-            document.getElementById('detailGender').innerText = student.gender;
-            document.getElementById('detailTtl').innerText = `${student.tempatLahir}, ${formatTanggalIndo(student.tanggalLahir)}`;
-            document.getElementById('detailWali').innerText = `${student.ayah} / ${student.ibu}`;
-            document.getElementById('detailTahunAjaran').innerText = student.tahunPelajaran;
-            document.getElementById('detailTahunLulus').innerText = student.tahunLulus;
-            document.getElementById('detailIjazah').innerText = student.ijazah || '-';
-            document.getElementById('detailSkl').innerText = student.skl || '-';
-            document.getElementById('detailNoPeserta').innerText = student.noPeserta || '-';
-            document.getElementById('detailNoHp').innerText = student.noHp || '-';
-            document.getElementById('detailAlamat').innerText = student.alamat || '-';
+            activeDetailStudent = s;
 
-            document.getElementById('detailFoto').src = student.foto || "https://placehold.co/120x160/0d6efd/ffffff?text=FOTO+3x4";
+            document.getElementById('detailNama').innerText = s.nama || '-';
+            document.getElementById('detailNisNisn').innerText = `${s.nis || '-'} / ${s.nisn || '-'}`;
+            document.getElementById('detailGender').innerText = s.gender || '-';
+            document.getElementById('detailTtl').innerText = `${s.tempatLahir || '-'}, ${formatTanggalIndo(s.tanggalLahir)}`;
+            document.getElementById('detailWali').innerText = `${s.ayah || '-'} / ${s.ibu || '-'}`;
+            document.getElementById('detailTahunAjaran').innerText = s.tahunPelajaran || '-';
+            document.getElementById('detailTahunLulus').innerText = s.tahunLulus || '-';
+            document.getElementById('detailIjazah').innerText = s.ijazah || '-';
+            document.getElementById('detailSkl').innerText = s.skl || '-';
+            document.getElementById('detailNoPeserta').innerText = s.noPeserta || '-';
+            document.getElementById('detailNoHp').innerText = s.noHp || '-';
+            document.getElementById('detailAlamat').innerText = s.alamat || '-';
 
+            const fotoEl = document.getElementById('detailFoto');
+            fotoEl.src = s.foto ? s.foto : "https://placehold.co/120x160/0d6efd/ffffff?text=FOTO+3x4";
+
+            // Generate QR Code Verifikasi
             const qrContainer = document.getElementById('detailQRCode');
             qrContainer.innerHTML = '';
             new QRCode(qrContainer, {
-                text: `VERIFIKASI-ALUMNI:${student.nisn}:${student.nama}`,
+                text: `VERIFIKASI ALUMNI:\nNama: ${s.nama}\nNISN: ${s.nisn}\nNo Ijazah: ${s.ijazah}\nSekolah: ${schoolProfile.namaSekolah}`,
                 width: 90,
                 height: 90
             });
+
+            // Update status label tombol cetak/pratinjau
+            updateModalDocLabels(s);
 
             const modal = new bootstrap.Modal(document.getElementById('detailModal'));
             modal.show();
         }
 
-        function processDocAction(type) {
-            if (!activeDetailStudent) return;
-            const docData = activeDetailStudent.dokumen ? activeDetailStudent.dokumen[type] : null;
+        function updateModalDocLabels(student) {
+            const docs = student.dokumen || {};
+            
+            document.getElementById('labelPrintKartu').innerText = docs.kartu ? "Pratinjau Kartu (Kustom)" : "Kartu Alumni";
+            document.getElementById('labelPrintSkl').innerText = docs.skl ? "Pratinjau SKL (Kustom)" : "Surat Ket. Lulus";
+            document.getElementById('labelPrintLegalisir').innerText = docs.legalisir ? "Pratinjau Legalisir (Kustom)" : "Dokumen Legalisir";
+        }
 
-            if (docData) {
-                const win = window.open();
-                win.document.write(`<iframe src="${docData}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+        /**
+         * FUNGSI PROSES DOKUMEN (PREVIEW MODE)
+         * Mengubah perilaku dari langsung unduh (download) menjadi pembukaan di tab baru (preview).
+         */
+        function processDocAction(docType) {
+            if (!activeDetailStudent) return;
+
+            const docs = activeDetailStudent.dokumen || {};
+            const customDoc = docs[docType];
+
+            if (customDoc && customDoc.data) {
+                // Skenario dokumen kustom diisi: Buka di tab baru (Preview Mode)
+                try {
+                    // Konversi Base64 Data URL menjadi Blob agar bisa ditayangkan dengan aman oleh browser
+                    const blob = dataURLtoBlob(customDoc.data);
+                    const blobUrl = URL.createObjectURL(blob);
+                    
+                    // Buka di tab baru
+                    const newWindow = window.open(blobUrl, '_blank');
+                    
+                    if (!newWindow) {
+                        showNotification('Gagal membuka tab baru. Pastikan Popup Blocker di browser Anda dimatikan!', 'warn');
+                    } else {
+                        showNotification(`Membuka pratinjau dokumen kustom ${docType.toUpperCase()}...`, 'info');
+                    }
+                } catch (e) {
+                    // Jika konversi Blob gagal, langsung coba buka data URL-nya
+                    window.open(customDoc.data, '_blank');
+                }
             } else {
-                showNotification(`Mencetak format standar ${type.toUpperCase()}`, 'info');
-                window.print();
+                // Skenario dokumen kustom kosong: Jalankan fallback cetak template bawaan aplikasi
+                executeDefaultSystemPrint(docType);
             }
         }
 
-        /* BULK PHOTO UPLOAD LOGIC */
+        // Helper fungsi konversi Base64 ke Blob
+        function dataURLtoBlob(dataurl) {
+            var arr = dataurl.split(','),
+                mime = arr[0].match(/:(.*?);/)[1],
+                bstr = atob(arr[1]), 
+                n = bstr.length, 
+                u8arr = new Uint8Array(n);
+            while(n--){
+                u8arr[n] = bstr.charCodeAt(n);
+            }
+            return new Blob([u8arr], {type:mime});
+        }
+
+        function executeDefaultSystemPrint(type) {
+            const s = activeDetailStudent;
+            if (!s) return;
+
+            const printArea = document.getElementById('printTemplateArea');
+            let templateHtml = '';
+
+            if (type === 'kartu') {
+                templateHtml = `
+                    <div class="print-layout p-4 border rounded text-center mx-auto" style="max-width: 400px; font-family: sans-serif;">
+                        <h5 class="fw-bold m-0 text-uppercase">${schoolProfile.namaSekolah}</h5>
+                        <p class="small text-muted mb-3">${schoolProfile.alamatSekolah}</p>
+                        <hr>
+                        <h6 class="fw-bold mb-3 text-primary">KARTU TANDA ALUMNI / LULUSAN</h6>
+                        <img src="${s.foto || 'https://placehold.co/120x160/0d6efd/ffffff?text=FOTO+3x4'}" style="width: 100px; height: 133px; object-fit: cover; border-radius: 6px;" class="mb-3">
+                        <h5 class="fw-bold mb-1">${s.nama}</h5>
+                        <p class="mb-1">NISN: ${s.nisn}</p>
+                        <p class="small text-muted">Tahun Pelajaran: ${s.tahunPelajaran}</p>
+                    </div>
+                `;
+            } else if (type === 'skl') {
+                templateHtml = `
+                    <div class="print-layout p-5 text-dark mx-auto" style="font-family: 'Times New Roman', serif; max-width: 700px; line-height: 1.6;">
+                        <div class="text-center border-bottom pb-3 mb-4">
+                            <h5 class="m-0 fw-bold text-uppercase">${schoolProfile.kabupaten}</h5>
+                            <h5 class="m-0 fw-bold text-uppercase">${schoolProfile.dinas}</h5>
+                            <h4 class="m-0 fw-bold text-uppercase">${schoolProfile.namaSekolah}</h4>
+                            <small>${schoolProfile.alamatSekolah}</small>
+                        </div>
+                        <h5 class="text-center fw-bold text-decoration-underline mb-1">SURAT KETERANGAN LULUS</h5>
+                        <p class="text-center small mb-4">Nomor: ${s.skl || 'SKL/2026/XXX'}</p>
+                        <p>Yang bertanda tangan di bawah ini Kepala ${schoolProfile.namaSekolah}, menerangkan bahwa:</p>
+                        <table class="w-100 my-3">
+                            <tr><td style="width:180px;">Nama Siswa</td><td>: <strong>${s.nama}</strong></td></tr>
+                            <tr><td>Tempat, Tgl Lahir</td><td>: ${s.tempatLahir}, ${formatTanggalIndo(s.tanggalLahir)}</td></tr>
+                            <tr><td>NIS / NISN</td><td>: ${s.nis} / ${s.nisn}</td></tr>
+                            <tr><td>Nomor Peserta Ujian</td><td>: ${s.noPeserta}</td></tr>
+                        </table>
+                        <p>Dinyatakan <strong>LULUS</strong> dari satuan pendidikan berdasarkan kriteria kelulusan yang berlaku.</p>
+                        <div class="d-flex justify-content-end mt-5 pt-4">
+                            <div class="text-center" style="width: 220px;">
+                                <p class="mb-5">${schoolProfile.kecamatan}, 20 Juli 2026<br>Kepala Sekolah,</p>
+                                <strong>${schoolProfile.principalName}</strong><br>
+                                NIP. ${schoolProfile.principalNip}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                templateHtml = `
+                    <div class="print-layout p-5 text-dark mx-auto" style="font-family: 'Times New Roman', serif; max-width: 700px; line-height: 1.6;">
+                        <h4 class="text-center fw-bold text-decoration-underline mb-4">LEMBAR LEGALISIR IJAZAH</h4>
+                        <p>Dilegalisir sesuai dengan dokumen aslinya oleh Satuan Pendidikan ${schoolProfile.namaSekolah}.</p>
+                        <table class="w-100 my-4 table table-bordered">
+                            <tr><th>Nama Alumni</th><td>${s.nama}</td></tr>
+                            <tr><th>NISN</th><td>${s.nisn}</td></tr>
+                            <tr><th>Nomor Seri Ijazah</th><td>${s.ijazah}</td></tr>
+                        </table>
+                        <div class="d-flex justify-content-end mt-5">
+                            <div class="text-center" style="width: 220px;">
+                                <p class="mb-5">Kepala Sekolah,</p>
+                                <strong>${schoolProfile.principalName}</strong><br>
+                                NIP. ${schoolProfile.principalNip}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            printArea.innerHTML = templateHtml;
+            window.print();
+        }
+
         function openBulkPhotoModal() {
             bulkPhotosQueue = [];
             document.getElementById('bulkPhotoFiles').value = '';
@@ -2386,215 +2547,192 @@
         }
 
         function handleBulkPhotoFiles(input) {
-            if (!input.files || input.files.length === 0) return;
+            const files = Array.from(input.files);
+            if (files.length === 0) return;
 
             bulkPhotosQueue = [];
-            const files = Array.from(input.files);
             const tbody = document.getElementById('bulkPhotoPreviewList');
             tbody.innerHTML = '';
 
             let matchedCount = 0;
 
-            files.forEach((file, index) => {
-                const fileName = file.name;
-                const refNisn = fileName.substring(0, fileName.lastIndexOf('.')) || fileName;
-                const student = dbSiswa.find(s => s.nisn === refNisn);
+            files.forEach((file) => {
+                const fileNameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+                const matchedStudent = dbSiswa.find(s => s.nisn === fileNameWithoutExt || s.nis === fileNameWithoutExt);
 
                 const tr = document.createElement('tr');
-                tr.id = `bulk-row-${index}`;
-
-                if (student) {
+                
+                if (matchedStudent) {
                     matchedCount++;
-                    tr.innerHTML = `
-                        <td>${fileName}</td>
-                        <td><code>${refNisn}</code></td>
-                        <td><strong>${student.nama}</strong></td>
-                        <td><div id="bulk-crop-prev-${index}" class="photo-preview-box" style="width:45px; height:60px;">Memuat...</div></td>
-                        <td class="text-center"><span class="badge bg-success">Cocok</span></td>
-                    `;
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = new Image();
+                        img.onload = function() {
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            canvas.width = 300;
+                            canvas.height = 400;
+
+                            const targetRatio = 3 / 4;
+                            let srcX = 0, srcY = 0, srcWidth = img.width, srcHeight = img.height;
+
+                            if (img.width / img.height > targetRatio) {
+                                srcWidth = img.height * targetRatio;
+                                srcX = (img.width - srcWidth) / 2;
+                            } else {
+                                srcHeight = img.width / targetRatio;
+                                srcY = (img.height - srcHeight) / 2;
+                            }
+
+                            ctx.drawImage(img, srcX, srcY, srcWidth, srcHeight, 0, 0, canvas.width, canvas.height);
+                            const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+                            bulkPhotosQueue.push({
+                                studentId: matchedStudent.id,
+                                photoData: croppedDataUrl
+                            });
+
+                            tr.innerHTML = `
+                                <td><code>${file.name}</code></td>
+                                <td>${fileNameWithoutExt}</td>
+                                <td><strong>${matchedStudent.nama}</strong></td>
+                                <td><img src="${croppedDataUrl}" style="width: 36px; height: 48px; object-fit: cover; border-radius: 4px;"></td>
+                                <td class="text-center"><span class="badge bg-success"><i class="bi bi-check-circle"></i> Cocok</span></td>
+                            `;
+                            document.getElementById('btnSaveBulkPhotos').disabled = false;
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
                 } else {
                     tr.innerHTML = `
-                        <td class="text-muted">${fileName}</td>
-                        <td><code>${refNisn}</code></td>
-                        <td class="text-muted">- Tidak Ditemukan -</td>
+                        <td><code>${file.name}</code></td>
+                        <td>${fileNameWithoutExt}</td>
+                        <td class="text-muted"><em>Tidak Ditemukan</em></td>
                         <td>-</td>
-                        <td class="text-center"><span class="badge bg-secondary">Tidak Ada Match</span></td>
+                        <td class="text-center"><span class="badge bg-danger"><i class="bi bi-x-circle"></i> Tidak Cocok</span></td>
                     `;
                 }
                 tbody.appendChild(tr);
-
-                if (student) {
-                    cropBulkImageTo3x4(file, function(croppedDataUrl) {
-                        const prevBox = document.getElementById(`bulk-crop-prev-${index}`);
-                        if (prevBox) {
-                            prevBox.innerHTML = `<img src="${croppedDataUrl}" style="width:100%; height:100%; object-fit:cover;">`;
-                        }
-                        bulkPhotosQueue.push({
-                            studentId: student.id,
-                            photoDataUrl: croppedDataUrl
-                        });
-
-                        if (bulkPhotosQueue.length > 0) {
-                            document.getElementById('btnSaveBulkPhotos').disabled = false;
-                        }
-                    });
-                }
             });
-        }
-
-        function cropBulkImageTo3x4(file, callback) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    canvas.width = 300;
-                    canvas.height = 400;
-
-                    const targetRatio = 3 / 4;
-                    let srcX = 0, srcY = 0, srcWidth = img.width, srcHeight = img.height;
-
-                    if (img.width / img.height > targetRatio) {
-                        srcWidth = img.height * targetRatio;
-                        srcX = (img.width - srcWidth) / 2;
-                    } else {
-                        srcHeight = img.width / targetRatio;
-                        srcY = (img.height - srcHeight) / 2;
-                    }
-
-                    ctx.drawImage(img, srcX, srcY, srcWidth, srcHeight, 0, 0, canvas.width, canvas.height);
-                    callback(canvas.toDataURL('image/jpeg', 0.85));
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
         }
 
         function saveBulkPhotosToDatabase() {
             if (bulkPhotosQueue.length === 0) return;
 
-            let updatedCount = 0;
             bulkPhotosQueue.forEach(item => {
-                const student = dbSiswa.find(s => s.id === item.studentId);
-                if (student) {
-                    student.foto = item.photoDataUrl;
-                    updatedCount++;
+                const index = dbSiswa.findIndex(s => s.id === item.studentId);
+                if (index !== -1) {
+                    dbSiswa[index].foto = item.photoData;
                 }
             });
 
             saveToLocalStorage();
-            initDataTables();
-            showNotification(`Berhasil memperbarui foto untuk ${updatedCount} siswa!`, 'success');
+            refreshTableAndCharts();
             bootstrap.Modal.getInstance(document.getElementById('bulkPhotoModal')).hide();
+            showNotification(`Berhasil memperbarui ${bulkPhotosQueue.length} foto siswa!`, 'success');
         }
 
-        /* EXPORT & IMPORT DATA LOGIC */
         function downloadImportTemplate() {
             const templateData = [
                 {
                     "NIS": "181901003",
                     "NISN": "0123456783",
                     "Nama Siswa": "Budi Santoso",
-                    "Jenis Kelamin (Laki-laki/Perempuan)": "Laki-laki",
+                    "Jenis Kelamin": "Laki-laki",
                     "Tempat Lahir": "Bandung",
                     "Tanggal Lahir (YYYY-MM-DD)": "2014-05-10",
                     "Nama Ayah": "Ahmad",
-                    "Nama Ibu": "Siti",
+                    "Nama Ibu": "Rina",
                     "No HP Orang Tua": "081299998888",
                     "Tahun Pelajaran": "2025/2026",
                     "Tahun Lulus": 2026,
-                    "Nomor Ijazah": "DN-01/D-SD/26/003",
-                    "Nomor SKL": "SKL/2026/014",
-                    "Nomor Peserta Ujian": "1-26-02-12-001-03",
-                    "Alamat Lengkap": "Jl. Asia Afrika No. 10, Bandung"
+                    "No Seri Ijazah": "DN-01/D-SD/26/003",
+                    "No SKL": "SKL/2026/014",
+                    "No Peserta Ujian": "1-26-02-12-001-03",
+                    "Alamat": "Jl. Asia Afrika No. 100, Bandung"
                 }
             ];
 
             const worksheet = XLSX.utils.json_to_sheet(templateData);
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Template Siswa");
-            XLSX.writeFile(workbook, "Template_Impor_Siswa_Lulusan.xlsx");
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Template");
+            XLSX.writeFile(workbook, "Template_Import_Siswa_Lulusan.xlsx");
+            showNotification('Template Excel berhasil diunduh.', 'info');
         }
 
         function handleExcelImport(input) {
-            if (!input.files || !input.files[0]) return;
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const jsonData = XLSX.utils.sheet_to_json(firstSheet);
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
-                    const json = XLSX.utils.sheet_to_json(worksheet);
+                        let importedCount = 0;
 
-                    let importedCount = 0;
-                    json.forEach((row, index) => {
-                        const nisn = row["NISN"] ? String(row["NISN"]).trim() : '';
-                        if (!nisn) return;
+                        jsonData.forEach((row) => {
+                            const nis = String(row["NIS"] || "").trim();
+                            const nisn = String(row["NISN"] || "").trim();
+                            const nama = String(row["Nama Siswa"] || "").trim();
 
-                        const newStudent = {
-                            id: "st-imp-" + Date.now() + "-" + index,
-                            nis: row["NIS"] ? String(row["NIS"]).trim() : '',
-                            nisn: nisn,
-                            nama: row["Nama Siswa"] || 'Siswa Tanpa Nama',
-                            gender: (row["Jenis Kelamin (Laki-laki/Perempuan)"] === 'Perempuan') ? 'Perempuan' : 'Laki-laki',
-                            tempatLahir: row["Tempat Lahir"] || '',
-                            tanggalLahir: row["Tanggal Lahir (YYYY-MM-DD)"] || '',
-                            ayah: row["Nama Ayah"] || '',
-                            ibu: row["Nama Ibu"] || '',
-                            noHp: row["No HP Orang Tua"] ? String(row["No HP Orang Tua"]).trim() : '',
-                            tahunPelajaran: row["Tahun Pelajaran"] || '2025/2026',
-                            tahunLulus: parseInt(row["Tahun Lulus"], 10) || 2026,
-                            ijazah: row["Nomor Ijazah"] || '',
-                            skl: row["Nomor SKL"] || '',
-                            noPeserta: row["Nomor Peserta Ujian"] || '',
-                            alamat: row["Alamat Lengkap"] || '',
-                            foto: '',
-                            dokumen: { kartu: null, skl: null, legalisir: null }
-                        };
+                            if (nama && (nis || nisn)) {
+                                const duplicate = dbSiswa.find(s => s.nisn === nisn && nisn !== "");
+                                if (!duplicate) {
+                                    dbSiswa.push({
+                                        id: 'st-' + Date.now() + Math.random().toString(36).substr(2, 4),
+                                        nis: nis,
+                                        nisn: nisn,
+                                        nama: nama,
+                                        gender: row["Jenis Kelamin"] || "Laki-laki",
+                                        tempatLahir: row["Tempat Lahir"] || "-",
+                                        tanggalLahir: row["Tanggal Lahir (YYYY-MM-DD)"] || "2014-01-01",
+                                        ayah: row["Nama Ayah"] || "-",
+                                        ibu: row["Nama Ibu"] || "-",
+                                        noHp: row["No HP Orang Tua"] || "-",
+                                        tahunPelajaran: row["Tahun Pelajaran"] || "2025/2026",
+                                        tahunLulus: parseInt(row["Tahun Lulus"]) || 2026,
+                                        ijazah: row["No Seri Ijazah"] || "-",
+                                        skl: row["No SKL"] || "-",
+                                        noPeserta: row["No Peserta Ujian"] || "-",
+                                        alamat: row["Alamat"] || "-",
+                                        foto: "",
+                                        dokumen: { kartu: null, skl: null, legalisir: null }
+                                    });
+                                    importedCount++;
+                                }
+                            }
+                        });
 
-                        const existingIndex = dbSiswa.findIndex(s => s.nisn === nisn);
-                        if (existingIndex > -1) {
-                            dbSiswa[existingIndex] = { ...dbSiswa[existingIndex], ...newStudent, id: dbSiswa[existingIndex].id };
-                        } else {
-                            dbSiswa.push(newStudent);
-                        }
-                        importedCount++;
-                    });
-
-                    saveToLocalStorage();
-                    initDataTables();
-                    recalculateOverview();
-                    populateYearFilter();
-                    populateRepTahunPelajaranDropdown();
-                    populateReplacementStudentDropdown();
-
-                    showNotification(`Berhasil mengimpor ${importedCount} data siswa dari Excel!`, 'success');
-                } catch(err) {
-                    showNotification('Gagal memproses file Excel. Pastikan format sesuai template.', 'error');
-                }
+                        saveToLocalStorage();
+                        refreshTableAndCharts();
+                        showNotification(`Berhasil mengimpor ${importedCount} data siswa baru!`, 'success');
+                    } catch(err) {
+                        showNotification('Gagal mengimpor file Excel! Pastikan format file sesuai.', 'error');
+                    }
+                };
+                reader.readAsArrayBuffer(input.files[0]);
                 input.value = '';
-            };
-            reader.readAsArrayBuffer(input.files[0]);
+            }
         }
 
         function exportDataExcel() {
             const filterYear = document.getElementById('filterTahunPelajaran').value;
             const dataToExport = filterYear ? dbSiswa.filter(s => s.tahunPelajaran === filterYear) : dbSiswa;
 
-            const exportList = dataToExport.map((s, idx) => ({
+            const exportArr = dataToExport.map((s, idx) => ({
                 "No": idx + 1,
                 "NIS": s.nis,
                 "NISN": s.nisn,
-                "Nama Siswa": s.nama,
+                "Nama Lengkap": s.nama,
                 "Jenis Kelamin": s.gender,
                 "Tempat Lahir": s.tempatLahir,
                 "Tanggal Lahir": s.tanggalLahir,
                 "Nama Ayah": s.ayah,
                 "Nama Ibu": s.ibu,
-                "No HP": s.noHp,
+                "No HP Wali": s.noHp,
                 "Tahun Pelajaran": s.tahunPelajaran,
                 "Tahun Lulus": s.tahunLulus,
                 "Nomor Ijazah": s.ijazah,
@@ -2603,76 +2741,78 @@
                 "Alamat": s.alamat
             }));
 
-            const worksheet = XLSX.utils.json_to_sheet(exportList);
+            const worksheet = XLSX.utils.json_to_sheet(exportArr);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Data Alumni");
-            XLSX.writeFile(workbook, `Data_Alumni_Lulusan_${filterYear || 'Semua'}.xlsx`);
+            XLSX.writeFile(workbook, `Data_Lulusan_${filterYear ? filterYear.replace('/', '-') : 'Semua'}.xlsx`);
+            showNotification('Data alumni berhasil diekspor ke Excel.', 'success');
         }
 
         function exportDataPDF() {
             window.print();
         }
 
-        /* BACKUP & RESTORE DATABASE LOGIC */
         function handleBackupDatabase() {
-            const backupPayload = {
-                appVersion: "2.1.0",
-                exportDate: new Date().toISOString(),
+            const fullBackupObj = {
+                version: "2.1.0",
+                timestamp: new Date().toISOString(),
                 schoolProfile: schoolProfile,
-                studentsData: dbSiswa,
+                students: dbSiswa,
                 replacementLogs: JSON.parse(localStorage.getItem('replacementLetterLogs')) || []
             };
 
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupPayload, null, 2));
-            const dlAnchorElem = document.createElement('a');
-            dlAnchorElem.setAttribute("href", dataStr);
-            dlAnchorElem.setAttribute("download", `Backup_Database_Alumni_${new Date().toISOString().slice(0,10)}.json`);
-            document.body.appendChild(dlAnchorElem);
-            dlAnchorElem.click();
-            dlAnchorElem.remove();
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullBackupObj, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `Backup_Database_Lulusan_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
 
-            showNotification('File cadangan database berhasil diunduh.', 'success');
+            showNotification('Cadangan database JSON berhasil diunduh.', 'success');
         }
 
         function handleRestoreDatabase(input) {
-            if (!input.files || !input.files[0]) return;
-
-            showConfirmDialog('Pemulihan Database', 'Apakah Anda yakin ingin memulihkan database? Seluruh data saat ini akan digantikan!', function() {
+            if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     try {
-                        const restoredPayload = JSON.parse(e.target.result);
+                        const parsedData = JSON.parse(e.target.result);
+                        if (parsedData.students && Array.isArray(parsedData.students)) {
+                            dbSiswa = parsedData.students;
+                            if (parsedData.schoolProfile) schoolProfile = parsedData.schoolProfile;
+                            if (parsedData.replacementLogs) localStorage.setItem('replacementLetterLogs', JSON.stringify(parsedData.replacementLogs));
 
-                        if (restoredPayload.studentsData && Array.isArray(restoredPayload.studentsData)) {
-                            dbSiswa = restoredPayload.studentsData;
                             saveToLocalStorage();
-                        }
-
-                        if (restoredPayload.schoolProfile) {
-                            schoolProfile = restoredPayload.schoolProfile;
                             saveProfileToLocalStorage();
+                            refreshTableAndCharts();
                             populateProfileFormValues();
                             updateAppBrand();
+
+                            showNotification('Database & konfigurasi berhasil dipulihkan!', 'success');
+                        } else {
+                            showNotification('Format file cadangan tidak valid!', 'error');
                         }
-
-                        if (restoredPayload.replacementLogs) {
-                            localStorage.setItem('replacementLetterLogs', JSON.stringify(restoredPayload.replacementLogs));
-                        }
-
-                        initDataTables();
-                        recalculateOverview();
-                        populateYearFilter();
-                        populateRepTahunPelajaranDropdown();
-                        populateReplacementStudentDropdown();
-
-                        showNotification('Database berhasil dipulihkan secara utuh!', 'success');
                     } catch(err) {
-                        showNotification('Berkas JSON tidak valid atau rusak.', 'error');
+                        showNotification('Gagal membaca file cadangan .json!', 'error');
                     }
-                    input.value = '';
                 };
                 reader.readAsText(input.files[0]);
-            });
+                input.value = '';
+            }
+        }
+
+        function formatTanggalIndo(dateString) {
+            if (!dateString) return '-';
+            const parts = dateString.split('-');
+            if (parts.length !== 3) return dateString;
+            
+            const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            const year = parts[0];
+            const monthIndex = parseInt(parts[1], 10) - 1;
+            const day = parseInt(parts[2], 10);
+
+            return `${day} ${months[monthIndex] || ''} ${year}`;
         }
     </script>
 </body>
