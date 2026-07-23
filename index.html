@@ -1520,18 +1520,23 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${index + 1}</td>
-                    <td><strong class="text-primary">${log.noSurat}</strong></td>
-                    <td>${log.tanggalCetak}</td>
+                    <td><code class="fw-bold text-primary">${log.noSurat}</code></td>
+                    <td><small>${log.tanggalCetak}</small></td>
                     <td>
-                        <div class="fw-bold">${log.namaSiswa}</div>
-                        <span class="text-muted small">NISN: ${log.nisn}</span>
+                        <strong>${log.namaSiswa}</strong><br>
+                        <small class="text-muted">NISN: ${log.nisn}</small>
                     </td>
-                    <td><span class="badge bg-secondary">${log.alasan}</span></td>
-                    <td>${log.penandatangan}</td>
+                    <td><span class="badge bg-warning text-dark">${log.alasan}</span></td>
+                    <td><small>${log.penandatangan}</small></td>
                     <td class="text-center">
-                        <button class="btn btn-sm btn-outline-primary" onclick="reprintReplacementLog(${log.id})" title="Pratinjau / Cetak Ulang">
-                            <i class="bi bi-printer"></i> Cetak Ulang
-                        </button>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary" onclick="reprintReplacementLog(${log.id})" title="Pratinjau / Cetak Ulang">
+                                <i class="bi bi-printer"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="deleteReplacementLog(${log.id})" title="Hapus Catatan">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
                     </td>
                 `;
                 tbody.appendChild(tr);
